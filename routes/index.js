@@ -8,6 +8,8 @@ const iconv = require('iconv-lite');
 const multiparty = require("multiparty");
 const moment = require("moment");
 
+const Prefectures = require('./prefectures.json')
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -95,9 +97,13 @@ async function convert(filepath) {
 
   for (let i=0; i<orders.length; i++) {
     const order = orders[i];
-    if (order['ステータス'] === '未発送') {
+    if (order['Fulfillment Status'] === 'unfulfilled' && order['Shipping Country'] === 'JP') {
 
-      let address = order['住所(配送先)'];
+
+      let province = Prefectures[parseInt(order['Shipping Province'].replace('JP-', ''))-1];
+      let address = '';
+      address += order['Shipping City']
+      address += order['Shipping Street'];
       let splitted = []
       while(address.length > 20) {
         splitted.push(address.substring(0, 20));
@@ -114,14 +120,16 @@ async function convert(filepath) {
       }
 
       let shipment = [];
-      shipment.push(order['郵便番号(配送先)']);
-      shipment.push(order['氏(配送先)'] + order['名(配送先)']);
+      shipment.push(order['Shipping Zip']);
+      shipment.push(order['Shipping Name']);
       shipment.push('様');
-      shipment.push(order['都道府県(配送先)']);
+      shipment.push(province);
       shipment.push(splitted[0]);
       shipment.push(splitted.length >=2 ? splitted[1] : '');
       shipment.push(splitted.length >=3 ? splitted[2] : '');
-      shipment.push(`電子部品。電池なし(obniz*${order['個数']})`);
+      shipment.push(`電子部品。電池なし(obniz*${order['Lineitem quantity']})`);
+
+      console.log(shipment);
 
       mustToSend.push(shipment)
     }
