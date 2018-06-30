@@ -48,7 +48,7 @@ router.post('/convert', function(req, res, next) {
 function parse(file) {
   return new Promise( async (resolve, reject) => {
     var buf = fs.readFileSync(file);
-    var string = iconv.decode(buf, 'shift_jis');
+    var string = buf.toString();
     csv.parse(string, function(err, data){
       if (err) {
         reject(err);
