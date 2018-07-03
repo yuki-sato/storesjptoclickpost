@@ -97,7 +97,7 @@ async function convert(filepath) {
 
   for (let i=0; i<orders.length; i++) {
     const order = orders[i];
-    if (order['Fulfillment Status'] === 'unfulfilled' && order['Shipping Country'] === 'JP') {
+    if (order['Fulfillment Status'] === 'unfulfilled' && order['Financial Status'] == 'paid' && order['Shipping Country'] === 'JP') {
 
 
       let province = Prefectures[parseInt(order['Shipping Province'].replace('JP-', ''))-1];
