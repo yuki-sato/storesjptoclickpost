@@ -127,7 +127,7 @@ async function convert(filepath) {
       shipment.push(splitted[0]);
       shipment.push(splitted.length >=2 ? splitted[1] : '');
       shipment.push(splitted.length >=3 ? splitted[2] : '');
-      shipment.push(`電子部品。電池なし(obniz*${order['Lineitem quantity']})`);
+      shipment.push(`電子部品。航空可(電池なし)`);
 
       console.log(shipment);
 
