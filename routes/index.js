@@ -15,10 +15,12 @@ router.get('/', function (req, res, next) {
   const dns = require('dns');
   var t = new Date();
   dns.lookup('obniz.io', (err, address, family) => {
-    console.error('obniz.io: ' + (new Date()).getTime() - t.getTime());
+    const a = (new Date()).getTime() - t.getTime();
+    console.error('obniz.io: ' + a);
+    res.render('index', { title: 'Express', a });
   });
 
-  res.render('index', { title: 'Express' });
+  
 });
 
 /* POST convert */
