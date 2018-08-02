@@ -11,14 +11,14 @@ const moment = require("moment");
 const Prefectures = require('./prefectures.json')
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-
+router.get('/', function (req, res, next) {
   const dns = require('dns');
   var t = new Date();
   dns.lookup('obniz.io', (err, address, family) => {
-    console.log('obniz.io: ' + (new Date()).getTime() - t.getTime());
+    console.error('obniz.io: ' + (new Date()).getTime() - t.getTime());
   });
+
+  res.render('index', { title: 'Express' });
 });
 
 /* POST convert */
