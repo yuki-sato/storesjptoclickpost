@@ -12,15 +12,7 @@ const Prefectures = require('./prefectures.json')
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
-  const dns = require('dns');
-  var t = new Date();
-  dns.lookup('obniz.io', (err, address, family) => {
-    const a = (new Date()).getTime() - t.getTime();
-    console.error('obniz.io: ' + a);
-    res.render('index', { title: 'Express', a });
-  });
-
-  
+  res.render('index', { title: 'Express' });
 });
 
 /* POST convert */
@@ -33,22 +25,25 @@ router.post('/convert', function(req, res, next) {
       });
       return;
     }
-    // check format
-    if (files == null || files.csv == null || files.csv[0] == null) {
-      next(new Error("please provide csv"));
-      return;
+    try {
+      // check format
+      if (files == null || files.csv == null || files.csv[0] == null) {
+        throw new Error("please provide csv");
+      }
+
+      const uploaded_path = files.csv[0].path;
+      const csv_shiftjis_string = await convert(uploaded_path);
+      await unlink(uploaded_path);
+
+      let date = new Date();
+      let filename = `POST_${moment().format("YYYY_MM_DD_HH:mm")}.csv`
+
+      res.setHeader('Content-disposition', 'attachment; filename='+filename);
+      res.set('Content-Type', 'text/csv');
+      res.send(csv_shiftjis_string);
+    } catch(e) {
+      next(e);
     }
-
-    const uploaded_path = files.csv[0].path;
-    const csv_shiftjis_string = await convert(uploaded_path);
-    await unlink(uploaded_path);
-
-    let date = new Date();
-    let filename = `POST_${moment().format("YYYY_MM_DD_HH:mm")}.csv`
-
-    res.setHeader('Content-disposition', 'attachment; filename='+filename);
-    res.set('Content-Type', 'text/csv');
-    res.send(csv_shiftjis_string);
   });
 });
 
@@ -105,9 +100,8 @@ async function convert(filepath) {
 
   for (let i=0; i<orders.length; i++) {
     const order = orders[i];
-    if (order['Fulfillment Status'] === 'unfulfilled' && order['Financial Status'] == 'paid' && order['Shipping Country'] === 'JP') {
-
-
+    // order['Fulfillment Status'] === 'unfulfilled' && 
+    if (order['Financial Status'] == 'paid' && order['Shipping Country'] === 'JP') {
       let province = Prefectures[parseInt(order['Shipping Province'].replace('JP-', ''))-1];
       let address = '';
       address += order['Shipping City']
@@ -128,21 +122,38 @@ async function convert(filepath) {
       }
 
       let shipment = [];
-      shipment.push(order['Shipping Zip']);
+      shipment.push(pretty_zip(order['Shipping Zip']));
       shipment.push(order['Shipping Name']);
       shipment.push('様');
       shipment.push(province);
       shipment.push(splitted[0]);
       shipment.push(splitted.length >=2 ? splitted[1] : '');
       shipment.push(splitted.length >=3 ? splitted[2] : '');
-      shipment.push(`電子部品。航空可(電池なし)`);
+      shipment.push(`電子部品`);
 
       console.log(shipment);
 
       mustToSend.push(shipment)
     }
   }
+  // if (mustToSend.length > 40) {
+  //   throw new Error("クリックポストは40件以上受け付けないらしいです");
+  // }
   return await stringify(mustToSend);
+}
+
+function pretty_zip(id) {
+  if (typeof id == "string") {
+    id = id.replace('-', '');
+  }
+  let digits = pad(id, 7);
+  return digits.slice(0,3) + "-" + digits.slice(3,7);
+}
+
+function pad(num, size) {
+  let s = ""+num;
+  while (s.length < size) s = "0" + s;
+  return s;
 }
 
 function unlink(dir) {
